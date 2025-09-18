@@ -1,0 +1,18 @@
+/* Simple clean styling for demo-ready UI */
+*{ box-sizing:border-box }
+body{ font-family:Inter,Arial,Helvetica,sans-serif; background:#f4f7fb; margin:0; color:#111 }
+.header{ display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#ffffff; box-shadow:0 2px 8px rgba(13,38,76,0.06) }
+.brand{ font-weight:700; color:#0b6df0; text-decoration:none; font-size:18px }
+.header nav a{ margin-right:12px; color:#333; text-decoration:none }
+.header nav button{ padding:6px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer }
+.container{ max-width:1100px; margin:20px auto; padding:12px }
+.card{ background:#fff; padding:14px; margin:10px 0; border-radius:10px; box-shadow:0 4px 16px rgba(13,38,76,0.04) }
+.grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px }
+.center{ display:flex; align-items:center; justify-content:center; height:72vh }
+input,textarea,select,button{ padding:8px 10px; margin:6px 0; width:100%; border-radius:6px; border:1px solid #e6e9ef }
+button{ background:#0b6df0; color:#fff; border:none; cursor:pointer; }
+small.muted{ color:#666 }
+.map{ display:flex; gap:12px; flex-wrap:wrap }
+.place{ width:220px }
+.event-poster{ border-radius:8px; padding:8px; background:linear-gradient(180deg,#eef6ff,#fff); }
+.notice-title{ font-weight:600; margin-bottom:6px }
