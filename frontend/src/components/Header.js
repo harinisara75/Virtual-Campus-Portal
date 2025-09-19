@@ -1,39 +1,50 @@
 // src/components/Header.js
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 export default function Header({ user, setUser }) {
   const navigate = useNavigate();
-  const logout = () => {
+  const location = useLocation();
+
+  const onLogout = () => {
     localStorage.removeItem('vc_token');
     localStorage.removeItem('vc_user');
     setUser(null);
     navigate('/login');
   };
 
+  // hide detailed nav on login or register
+  if (location.pathname === '/login' || location.pathname === '/register') {
+    return (
+      <header className='header'>
+        <a href='/' className='brand'>Virtual Campus</a>
+      </header>
+    );
+  }
+
   return (
-    <header className="header">
+    <header className='header'>
       <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-        <Link to="/" className="brand">Virtual Campus</Link>
-        <nav style={{ display:'flex', gap:12 }}>
-          <Link to="/">Dashboard</Link>
-          <Link to="/notices">Notices</Link>
-          <Link to="/events">Events</Link>
-          <Link to="/timetable">Timetable</Link>
-          <Link to="/map">Map</Link>
-        </nav>
+        <Link to='/' className='brand'>Virtual Campus</Link>
+        {user && (
+          <nav>
+            <Link to='/' style={{ marginRight:12 }}>Dashboard</Link>
+            <Link to='/notices' style={{ marginRight:12 }}>Notices</Link>
+            <Link to='/events' style={{ marginRight:12 }}>Events</Link>
+            <Link to='/timetable' style={{ marginRight:12 }}>Timetable</Link>
+            <Link to='/map' style={{ marginRight:12 }}>Map</Link>
+          </nav>
+        )}
       </div>
 
       <div>
-        {user ? (
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ padding:'6px 10px', background:'#eef6ff', borderRadius:8 }}>
-              {user.name} • <small style={{ opacity:.7 }}>{user.role}</small>
-            </div>
-            <button onClick={logout} style={{ padding:'6px 10px', borderRadius:6 }}>Logout</button>
-          </div>
+        { user ? (
+          <>
+            <span style={{ marginRight:12 }}>{user.name} • {user.role}</span>
+            <button onClick={onLogout}>Logout</button>
+          </>
         ) : (
-          <Link to="/login">Login</Link>
+          <Link to='/login'>Login</Link>
         )}
       </div>
     </header>

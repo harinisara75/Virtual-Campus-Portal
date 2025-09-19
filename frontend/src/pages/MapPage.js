@@ -1,24 +1,20 @@
+// src/pages/MapPage.js
 import React from 'react';
 
 export default function MapPage(){
-  const places = [
-    {name:'Library', info:'Open 9:00 - 17:00. Books: 1200'},
-    {name:'Computer Lab', info:'Lab 101, 50 PCs'},
-    {name:'Canteen', info:'Veg/Non-Veg, opens 8:00'},
-    {name:'Hostel', info:'Warden: +91-XXXXXXXX'}
-  ];
-
+  const embed = process.env.REACT_APP_MAP_EMBED || '';
   return (
     <div className='container'>
       <h1>Campus Map</h1>
-      <div className='map'>
-        { places.map(p=> (
-          <div className='card place' key={p.name}>
-            <h3>{p.name}</h3>
-            <p>{p.info}</p>
-          </div>
-        )) }
-      </div>
+      {embed ? (
+        <div className='card'>
+          <iframe src={embed} width='100%' height='450' style={{border:0}} allowFullScreen="" loading="lazy"></iframe>
+        </div>
+      ) : (
+        <div className='card'>
+          <p className='muted'>No map embed set. Add REACT_APP_MAP_EMBED to Netlify env with Google Maps embed URL</p>
+        </div>
+      )}
     </div>
   );
 }

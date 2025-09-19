@@ -1,36 +1,47 @@
+// src/pages/Login.js
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../api';
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
-  const submit = async e => {
+  const submit = async (e) => {
     e.preventDefault();
     try {
       const res = await API.post('/auth/login', { email, password });
-      
-      // 👇 Debug log
-      console.log('Response data:', res.data);
+      // expected res.data: { token, name, role }
+      const token = res.data.token;
+      const name = res.data.name || res.data.user?.name;
+      const role = res.data.role || res.data.user?.role;
 
-      localStorage.setItem('vc_token', res.data.token);
-      const u = { name: res.data.name, role: res.data.role };
+      if (!token) {
+        alert('Login failed: no token returned.');
+        return;
+      }
+
+      localStorage.setItem('vc_token', token);
+      const u = { name: name || 'User', role: role || 'student' };
       localStorage.setItem('vc_user', JSON.stringify(u));
-      setUser(u);
-      window.location = '/';
+      setUser && setUser(u);
+
+      // redirect to dashboard
+      navigate('/', { replace: true });
     } catch (err) {
-      alert('Login failed: check email/password');
+      console.error('Login error', err.response || err.message);
+      alert('Login failed: check email and password.');
     }
   };
 
   return (
     <div className='center'>
-      <form onSubmit={submit} className='card' style={{ minWidth: 320 }}>
+      <form onSubmit={submit} className='card' style={{ minWidth:320 }}>
         <h2>Login</h2>
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder='Email' required />
         <input value={password} onChange={e => setPassword(e.target.value)} placeholder='Password' type='password' required />
         <button type='submit'>Login</button>
-        <small className='muted'>Teacher accounts needed for create actions.</small>
       </form>
     </div>
   );

@@ -10,6 +10,7 @@ import MapPage from './pages/MapPage';
 import Profile from './pages/Profile';
 import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
+import Register from './pages/Register';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -36,6 +37,7 @@ function App() {
         <Route path="/map" element={<PrivateRoute user={user}><MapPage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute user={user}><Profile user={user} /></PrivateRoute>} />
         <Route path="*" element={<Navigate to={user ? '/' : '/login'} />} />
+        <Route path='/register' element={<Register/>} />
       </Routes>
     </BrowserRouter>
   );
