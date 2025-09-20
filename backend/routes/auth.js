@@ -38,10 +38,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Current user
+// GET /api/auth/me
 router.get('/me', auth, async (req, res) => {
-  const user = await User.findById(req.user.id).select('-password');
-  res.json(user);
+  try {
+    const user = await User.findById(req.user.id).select('-password').populate('joinedEvents');
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
 });
+
 
 module.exports = router;

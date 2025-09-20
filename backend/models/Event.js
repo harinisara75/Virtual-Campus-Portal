@@ -5,8 +5,14 @@ const EventSchema = new mongoose.Schema({
   description: String,
   date: Date,
   place: String,
+  type: String,
   attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
+
 module.exports = mongoose.model('Event', EventSchema);
+
+
+
+
