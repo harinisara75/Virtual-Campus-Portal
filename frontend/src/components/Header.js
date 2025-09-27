@@ -1,7 +1,8 @@
 // src/components/Header.js
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import API from '../utils/api'; // adjust path if your axios instance is elsewhere
+// adjust path if your axios instance is elsewhere
+import API from '../api';
 
 export default function Header({ user, setUser }) {
   const navigate = useNavigate();
