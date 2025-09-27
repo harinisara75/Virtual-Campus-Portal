@@ -11,7 +11,6 @@ export default function Events({ user }) {
 
   useEffect(() => {
     loadEvents();
-
     const handler = () => loadEvents();
     window.addEventListener('vc:userUpdated', handler);
     return () => window.removeEventListener('vc:userUpdated', handler);
@@ -19,15 +18,19 @@ export default function Events({ user }) {
 
   const loadEvents = async () => {
     try {
-      // 1) get all events
       const res = await API.get('/api/events');
-      const arr = (res.data || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+      const arr = (res.data || []).sort((a, b) => {
+        const ta = safeTime(a.date);
+        const tb = safeTime(b.date);
+        return ta - tb;
+      });
 
-      // debug logs (to see why filtering fails)
-      console.log('[Events] fetched events:', arr);
+      // debug
+      console.log('[Events] fetched events raw:', res.data);
+      console.log('[Events] normalized dates:', arr.map(e => ({ id: e._id, date: e.date, ts: safeTime(e.date) })));
       console.log('[Events] stored vc_user:', localStorage.getItem('vc_user'));
 
-      // 2) if token exists, fetch /me for fresh account
+      // fresh user if possible
       let currentUser = null;
       const token = localStorage.getItem('vc_token');
       if (token) {
@@ -35,7 +38,7 @@ export default function Events({ user }) {
         try {
           const meRes = await API.get('/api/auth/me');
           currentUser = meRes.data;
-          localStorage.setItem('vc_user', JSON.stringify(currentUser)); // keep fresh
+          localStorage.setItem('vc_user', JSON.stringify(currentUser));
         } catch (_) {
           const raw = localStorage.getItem('vc_user');
           if (raw) currentUser = JSON.parse(raw);
@@ -45,11 +48,9 @@ export default function Events({ user }) {
         if (raw) currentUser = JSON.parse(raw);
       }
 
-      // 3) filter: if student show only their joined events, else show all
+      // filter for students or show all for teachers
       if (currentUser && currentUser.role === 'student') {
-        const joinedIds = (currentUser.joinedEvents || []).map(x =>
-          typeof x === 'string' ? x : x._id
-        );
+        const joinedIds = (currentUser.joinedEvents || []).map(x => (typeof x === 'string' ? x : x._id));
         setEvents(arr.filter(e => joinedIds.includes(e._id)));
       } else {
         setEvents(arr);
@@ -59,6 +60,16 @@ export default function Events({ user }) {
       setEvents([]);
     }
   };
+
+  // helper: return numeric ms timestamp or null (treat 0 or <=0 as null)
+  function safeTime(val) {
+    if (!val && val !== 0) return NaN;
+    const t = (typeof val === 'number') ? val : Date.parse(String(val));
+    if (isNaN(t)) return NaN;
+    // treat 0 or negative as invalid
+    if (t <= 0) return NaN;
+    return t;
+  }
 
   const create = async () => {
     if (!user || (user.role !== 'teacher' && user.role !== 'admin')) {
@@ -76,12 +87,8 @@ export default function Events({ user }) {
     try {
       await API.post(`/api/events/${id}/join`);
       alert('You joined the event.');
-
-      // fetch updated user + save to localStorage
       const me = await API.get('/api/auth/me');
       localStorage.setItem('vc_user', JSON.stringify(me.data));
-
-      // reload events after update
       await loadEvents();
     } catch (err) {
       console.error('Join failed', err);
@@ -99,18 +106,23 @@ export default function Events({ user }) {
     } catch (err) { console.error(err); alert('Delete failed'); }
   };
 
-  // ✅ Safe upcoming filter (no 1970 problem)
+  // safe upcoming filter (uses safeTime)
   const todayStart = new Date(); todayStart.setHours(0,0,0,0);
   const upcoming = events.filter(e => {
-    const d = e && e.date ? new Date(e.date) : null;
-    if (!d || isNaN(d.getTime())) return false; // skip invalid
-    d.setHours(0,0,0,0);
-    return d.getTime() >= todayStart.getTime();
+    const ts = safeTime(e.date);
+    if (isNaN(ts)) return false;
+    return ts >= todayStart.getTime();
   });
+
+  // helper to render date or 'TBD'
+  const renderDate = (d) => {
+    const ts = safeTime(d);
+    return isNaN(ts) ? 'TBD' : new Date(ts).toLocaleDateString();
+  };
 
   return (
     <div className='container'>
-      <h1>{(user && user.role === 'student') ? 'Joined Events' : 'Events'}</h1>
+      <h1>{(user && user.role === 'student') ? 'My Joined Events' : 'Events'}</h1>
 
       {user && (user.role === 'teacher' || user.role === 'admin') && (
         <div className='card'>
@@ -134,11 +146,7 @@ export default function Events({ user }) {
           <div key={ev._id} className='card' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h4 style={{ margin: 0 }}>{ev.title}</h4>
-              <div className='muted'>
-                {ev.date && !isNaN(new Date(ev.date).getTime()) 
-                  ? new Date(ev.date).toLocaleDateString() 
-                  : 'TBD'} • {ev.place}
-              </div>
+              <div className='muted'>{renderDate(ev.date)} • {ev.place || 'TBD'}</div>
               <div className='muted small'>Type: {ev.type || 'general'}</div>
             </div>
             <div>
