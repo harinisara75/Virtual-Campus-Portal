@@ -1,0 +1,83 @@
+/* Simple clean styling for demo-ready UI */
+*{ box-sizing:border-box }
+body{ font-family:Inter,Arial,Helvetica,sans-serif; background:#f4f7fb; margin:0; color:#111 }
+.header{ display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#ffffff; box-shadow:0 2px 8px rgba(13,38,76,0.06) }
+.brand{ font-weight:700; color:#0b6df0; text-decoration:none; font-size:18px }
+.header nav a{ margin-right:12px; color:#333; text-decoration:none }
+.header nav button{ padding:6px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer }
+.container{ max-width:1100px; margin:20px auto; padding:12px }
+.card{ background:#fff; padding:14px; margin:10px 0; border-radius:10px; box-shadow:0 4px 16px rgba(13,38,76,0.04) }
+.grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px }
+.center{ display:flex; align-items:center; justify-content:center; height:72vh }
+input,textarea,select,button{ padding:8px 10px; margin:6px 0; width:100%; border-radius:6px; border:1px solid #e6e9ef }
+button{ background:#0b6df0; color:#fff; border:none; cursor:pointer; }
+small.muted{ color:#666 }
+.map{ display:flex; gap:12px; flex-wrap:wrap }
+.place{ width:220px }
+.event-poster{ border-radius:8px; padding:8px; background:linear-gradient(180deg,#eef6ff,#fff); }
+.notice-title{ font-weight:600; margin-bottom:6px }
+
+
+
+
+
+
+
+
+
+
+
+
+/* ---------- Virtual Campus Dashboard styles (append) ---------- */
+
+.vc-page { display:flex; min-height:100vh; font-family:Inter,Arial,Helvetica,sans-serif; background:#f3f7fb; color:#0d1b2a; }
+/* Sidebar */
+.vc-sidebar { width:240px; background:linear-gradient(180deg,#1e90ff,#2ea3ff); color:#fff; padding:22px; box-shadow:2px 0 8px rgba(13,38,76,0.06); display:flex; flex-direction:column; justify-content:space-between; }
+.vc-brand { font-weight:700; margin-bottom:18px; font-size:18px; }
+.vc-nav { display:flex; flex-direction:column; gap:8px; }
+.vc-nav-item { color:rgba(255,255,255,0.95); text-decoration:none; padding:8px 10px; border-radius:8px; }
+.vc-nav-item.active, .vc-nav-item:hover { background:rgba(255,255,255,0.12); }
+.vc-sidebar-footer { font-size:13px; opacity:0.9; margin-top:18px; }
+
+/* Main area */
+.vc-main { flex:1; padding:20px 30px; }
+.vc-main-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.vc-search-box input { width:420px; padding:10px 12px; border-radius:8px; border:1px solid #e6eef9; }
+.vc-user-mini{ font-weight:600; color:#1b365f; }
+
+/* Grid layout */
+.vc-grid { display:flex; gap:20px; align-items:flex-start; }
+
+/* Left column */
+.vc-left-col { flex:1.1; display:flex; flex-direction:column; gap:16px; }
+.vc-card { background:#fff; padding:16px; border-radius:12px; box-shadow:0 8px 24px rgba(13,38,76,0.06); }
+.small-stats .stat-row { display:flex; gap:10px; justify-content:space-between; }
+.stat { display:flex; flex-direction:column; gap:6px; padding:12px; background:#f7fbff; border-radius:8px; flex:1; }
+.stat-num { font-weight:700; font-size:20px; color:#0b6df0; }
+
+/* Events & lists */
+.event-list, .notice-list { list-style:none; margin:0; padding:0; }
+.event-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px dashed #eee; }
+.event-row:last-child { border-bottom:none; }
+.btn-join { padding:6px 10px; border-radius:8px; background:#0b6df0; color:#fff; border:none; cursor:pointer; }
+
+/* Right column */
+.vc-right-col { width:480px; display:flex; flex-direction:column; gap:16px; }
+.events-grid .events-grid-inner { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.event-card { background:linear-gradient(180deg,#fff,#f8fbff); border-radius:10px; padding:10px; display:flex; gap:10px; align-items:center; box-shadow:0 6px 18px rgba(13,38,76,0.03); }
+.event-thumb { width:56px; height:56px; border-radius:8px; background:linear-gradient(45deg,#ffd1dc,#a0c4ff); }
+.event-info .event-title { font-weight:600; font-size:14px; }
+
+/* Map */
+.map-placeholder { height:120px; background:linear-gradient(180deg,#eef7ff,#ffffff); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#6b7b8a; }
+
+/* Profile */
+.profile-inner { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+.avatar { width:56px; height:56px; border-radius:50%; background:#0b6df0; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; }
+.profile-name { font-weight:700; }
+.joined-events ul { list-style:none; padding:0; margin:0; }
+
+/* small helpers */
+.muted { color:#6b7b8a; }
+.small { font-size:13px; }
+.card-title { margin:0 0 10px 0; font-size:16px; font-weight:700; }
