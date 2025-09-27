@@ -16,30 +16,37 @@ export default function Events({ user }) {
     return () => window.removeEventListener('vc:userUpdated', handler);
   }, []);
 
+  // helper: return ms timestamp or NaN (treat 0/invalid as NaN)
+  function safeTime(val) {
+    if (val === undefined || val === null) return NaN;
+    const t = (typeof val === 'number') ? val : Date.parse(String(val));
+    if (isNaN(t) || t <= 0) return NaN;
+    return t;
+  }
+  const renderDate = (d) => {
+    const ts = safeTime(d);
+    return isNaN(ts) ? 'TBD' : new Date(ts).toLocaleDateString();
+  };
+
   const loadEvents = async () => {
     try {
       const res = await API.get('/api/events');
-      const arr = (res.data || []).sort((a, b) => {
-        const ta = safeTime(a.date);
-        const tb = safeTime(b.date);
-        return ta - tb;
-      });
+      const arr = (res.data || []).sort((a, b) => safeTime(a.date) - safeTime(b.date));
 
-      // debug
-      console.log('[Events] fetched events raw:', res.data);
-      console.log('[Events] normalized dates:', arr.map(e => ({ id: e._id, date: e.date, ts: safeTime(e.date) })));
-      console.log('[Events] stored vc_user:', localStorage.getItem('vc_user'));
+      // debug (optional)
+      console.log('[Events] fetched:', arr);
+      console.log('[Events] vc_user:', localStorage.getItem('vc_user'));
 
-      // fresh user if possible
+      // try to get fresh current user if token exists
       let currentUser = null;
       const token = localStorage.getItem('vc_token');
       if (token) {
         API.defaults.headers.common['x-auth-token'] = token;
         try {
-          const meRes = await API.get('/api/auth/me');
-          currentUser = meRes.data;
+          const me = await API.get('/api/auth/me');
+          currentUser = me.data;
           localStorage.setItem('vc_user', JSON.stringify(currentUser));
-        } catch (_) {
+        } catch (e) {
           const raw = localStorage.getItem('vc_user');
           if (raw) currentUser = JSON.parse(raw);
         }
@@ -48,7 +55,6 @@ export default function Events({ user }) {
         if (raw) currentUser = JSON.parse(raw);
       }
 
-      // filter for students or show all for teachers
       if (currentUser && currentUser.role === 'student') {
         const joinedIds = (currentUser.joinedEvents || []).map(x => (typeof x === 'string' ? x : x._id));
         setEvents(arr.filter(e => joinedIds.includes(e._id)));
@@ -61,25 +67,22 @@ export default function Events({ user }) {
     }
   };
 
-  // helper: return numeric ms timestamp or null (treat 0 or <=0 as null)
-  function safeTime(val) {
-    if (!val && val !== 0) return NaN;
-    const t = (typeof val === 'number') ? val : Date.parse(String(val));
-    if (isNaN(t)) return NaN;
-    // treat 0 or negative as invalid
-    if (t <= 0) return NaN;
-    return t;
-  }
-
   const create = async () => {
     if (!user || (user.role !== 'teacher' && user.role !== 'admin')) {
       alert('Only teachers can create'); return;
     }
     try {
-      const res = await API.post('/api/events', { title, date, place, type: etype });
+      // ensure backend receives date as ISO or null
+      const payload = { title, place, type: etype, date: date ? new Date(date).toISOString() : null };
+      const res = await API.post('/api/events', payload);
       setEvents(prev => [res.data, ...prev]);
       setTitle(''); setDate(''); setPlace('');
-    } catch (err) { console.error(err); alert('Create failed'); }
+      // notify other pages (Dashboard) to reload
+      window.dispatchEvent(new Event('vc:eventsUpdated'));
+    } catch (err) {
+      console.error('Create failed', err);
+      alert('Create failed');
+    }
   };
 
   const join = async (id) => {
@@ -87,9 +90,11 @@ export default function Events({ user }) {
     try {
       await API.post(`/api/events/${id}/join`);
       alert('You joined the event.');
+      // refresh user and events for this account
       const me = await API.get('/api/auth/me');
       localStorage.setItem('vc_user', JSON.stringify(me.data));
       await loadEvents();
+      window.dispatchEvent(new Event('vc:userUpdated'));
     } catch (err) {
       console.error('Join failed', err);
       alert('Join failed: ' + (err?.response?.data?.msg || 'Check console'));
@@ -103,22 +108,19 @@ export default function Events({ user }) {
     try {
       await API.delete(`/api/events/${id}`);
       setEvents(prev => prev.filter(e => e._id !== id));
-    } catch (err) { console.error(err); alert('Delete failed'); }
+      window.dispatchEvent(new Event('vc:eventsUpdated'));
+    } catch (err) {
+      console.error('Delete failed', err);
+      alert('Delete failed');
+    }
   };
 
-  // safe upcoming filter (uses safeTime)
-  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
   const upcoming = events.filter(e => {
     const ts = safeTime(e.date);
     if (isNaN(ts)) return false;
-    return ts >= todayStart.getTime();
+    return ts >= todayStart;
   });
-
-  // helper to render date or 'TBD'
-  const renderDate = (d) => {
-    const ts = safeTime(d);
-    return isNaN(ts) ? 'TBD' : new Date(ts).toLocaleDateString();
-  };
 
   return (
     <div className='container'>
@@ -143,15 +145,15 @@ export default function Events({ user }) {
 
       <div className='grid'>
         {upcoming.length === 0 ? <p className='muted'>No upcoming events</p> : upcoming.map(ev => (
-          <div key={ev._id} className='card' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div key={ev._id} className='card' style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div>
-              <h4 style={{ margin: 0 }}>{ev.title}</h4>
+              <h4 style={{margin:0}}>{ev.title}</h4>
               <div className='muted'>{renderDate(ev.date)} • {ev.place || 'TBD'}</div>
               <div className='muted small'>Type: {ev.type || 'general'}</div>
             </div>
             <div>
               {user && (user.role === 'teacher' || user.role === 'admin') ? (
-                <button onClick={() => remove(ev._id)} style={{ background: '#ff6b6b' }}>Delete</button>
+                <button onClick={() => remove(ev._id)} style={{background:'#ff6b6b'}}>Delete</button>
               ) : (
                 <button onClick={() => join(ev._id)}>Join</button>
               )}
@@ -161,4 +163,9 @@ export default function Events({ user }) {
       </div>
     </div>
   );
+
+  function renderDate(d) {
+    const ts = safeTime(d);
+    return isNaN(ts) ? 'TBD' : new Date(ts).toLocaleDateString();
+  }
 }

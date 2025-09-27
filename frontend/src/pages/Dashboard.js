@@ -10,79 +10,111 @@ export default function Dashboard() {
   const [joinedEvents, setJoinedEvents] = useState([]);
   const navigate = useNavigate();
 
-  // fetch events
+  // helper: safe parse local user
+  const getLocalUser = () => {
+    try {
+      const raw = localStorage.getItem('vc_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  };
+
   const loadEvents = async () => {
     try {
       const evRes = await API.get('/api/events');
-      setEvents(evRes.data || []);
+      const arr = evRes.data || [];
+      setEvents(arr);
 
-      // filter joined events if user exists in localStorage
-      const rawUser = JSON.parse(localStorage.getItem('vc_user') || 'null');
+      const rawUser = getLocalUser();
       if (rawUser && Array.isArray(rawUser.joinedEvents)) {
         const ids = rawUser.joinedEvents.map(e => (typeof e === 'string' ? e : e._id));
-        const filtered = (evRes.data || []).filter(e => ids.includes(e._id));
+        const filtered = arr.filter(e => ids.includes(e._id));
         setJoinedEvents(filtered);
       } else {
         setJoinedEvents([]);
       }
-    } catch {
+    } catch (err) {
+      console.error('loadEvents error', err);
       setEvents([]);
       setJoinedEvents([]);
     }
   };
 
-  // fetch notices
   const loadNotices = async () => {
     try {
       const noRes = await API.get('/api/notices');
       setNotices(noRes.data || []);
-    } catch {
+    } catch (err) {
+      console.error('loadNotices error', err);
       setNotices([]);
     }
   };
 
   useEffect(() => {
+    // initial load
     loadEvents();
     loadNotices();
 
-    const rawUser = localStorage.getItem('vc_user');
-    if (rawUser) setUser(JSON.parse(rawUser));
+    const local = getLocalUser();
+    if (local) setUser(local);
+
+    // listen for updates: events created/deleted
+    const onEventsUpdated = () => loadEvents();
+    // listen for user changes (login/logout/join)
+    const onUserUpdated = () => {
+      const lu = getLocalUser();
+      setUser(lu);
+      loadEvents();
+      loadNotices();
+    };
+
+    window.addEventListener('vc:eventsUpdated', onEventsUpdated);
+    window.addEventListener('vc:userUpdated', onUserUpdated);
+
+    return () => {
+      window.removeEventListener('vc:eventsUpdated', onEventsUpdated);
+      window.removeEventListener('vc:userUpdated', onUserUpdated);
+    };
   }, []);
 
-  // handle join button click
   const handleJoin = async (eventId) => {
     try {
       const rawUser = localStorage.getItem('vc_user');
       if (!rawUser) { alert('Please login to join'); return; }
 
-      // call backend to join
       await API.post(`/api/events/${eventId}/join`);
       alert('You joined the event.');
 
-      // fetch fresh user from server and save locally
+      // refresh user from server
       try {
         const me = await API.get('/api/auth/me');
         localStorage.setItem('vc_user', JSON.stringify(me.data));
         setUser(me.data);
       } catch (e) {
-        // if /me fails, keep existing localUser
         console.warn('Could not refresh user after join', e);
       }
 
-      // refresh lists on dashboard
+      // reload lists
       await loadEvents();
       loadNotices();
 
-      // navigate to Events page so student sees joined list
+      // go to events page
       navigate('/events');
 
-      // notify other pages to refresh
+      // notify other pages
       window.dispatchEvent(new Event('vc:userUpdated'));
     } catch (err) {
       console.error('Join failed', err);
       const msg = err?.response?.data?.msg || err?.message || 'Join failed';
       alert('Join failed: ' + msg);
     }
+  };
+
+  // small safe date helper for display
+  const safeDateStr = (d) => {
+    if (!d) return 'TBD';
+    const t = Date.parse(String(d));
+    if (isNaN(t) || t <= 0) return 'TBD';
+    return new Date(t).toLocaleDateString();
   };
 
   return (
@@ -122,7 +154,7 @@ export default function Dashboard() {
                     <li key={ev._id} className="event-row" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                       <div>
                         <h4 style={{margin:0}}>{ev.title}</h4>
-                        <div className="muted">{new Date(ev.date).toLocaleDateString()} • {ev.place}</div>
+                        <div className="muted">{safeDateStr(ev.date)} • {ev.place || 'TBD'}</div>
                         <div className="muted small">Type: {ev.type || 'general'}</div>
                       </div>
                       <div>
@@ -162,6 +194,15 @@ export default function Dashboard() {
                   <div className="profile-name">{user?.name || 'Demo User'}</div>
                   <div className="muted small">Role: {user?.role || 'Student'}</div>
                 </div>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <h4>Joined Events</h4>
+                {joinedEvents.length === 0 ? <p className="muted">No joined events</p> : (
+                  <ul>
+                    {joinedEvents.map(e => <li key={e._id} className="muted small">{e.title} — {safeDateStr(e.date)}</li>)}
+                  </ul>
+                )}
               </div>
             </div>
           </div>
