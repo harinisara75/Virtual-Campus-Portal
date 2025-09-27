@@ -5,13 +5,26 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 // Create event (POST /api/events)
+// Create event
 router.post('/', auth, async (req, res) => {
   try {
-    const ev = new Event({ ...req.body, createdBy: req.user.id });
+    // FIX: parse date
+    const { title, date, place, type } = req.body;
+    const ev = new Event({
+      title,
+      place,
+      type,
+      createdBy: req.user.id,
+      date: date ? new Date(date) : null   // ← ensure valid Date object
+    });
     await ev.save();
     res.json(ev);
-  } catch (err) { console.error(err); res.status(500).send('Server error'); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
 });
+
 
 // List events (GET /api/events)
 router.get('/', auth, async (req, res) => {
