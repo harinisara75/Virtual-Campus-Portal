@@ -10,20 +10,43 @@ export default function Dashboard() {
   const [joinedEvents, setJoinedEvents] = useState([]);
   const navigate = useNavigate();
 
-  // helper: safe parse local user
+  // safe parse local user
   const getLocalUser = () => {
     try {
       const raw = localStorage.getItem('vc_user');
       return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
+    } catch (e) {
+      return null;
+    }
   };
 
+  // safe timestamp helper: returns ms or NaN for invalid (treat 0 as invalid)
+  const safeTime = (val) => {
+    if (val === undefined || val === null) return NaN;
+    const t = (typeof val === 'number') ? val : Date.parse(String(val));
+    if (isNaN(t) || t <= 0) return NaN;
+    return t;
+  };
+
+  // load events from server, sort and compute joinedEvents
   const loadEvents = async () => {
     try {
       const evRes = await API.get('/api/events');
-      const arr = evRes.data || [];
+      const arr = (evRes.data || []).slice();
+
+      // sort: valid dates first (ascending). invalid dates move to end.
+      arr.sort((a, b) => {
+        const ta = safeTime(a.date);
+        const tb = safeTime(b.date);
+        if (isNaN(ta) && isNaN(tb)) return 0;
+        if (isNaN(ta)) return 1;
+        if (isNaN(tb)) return -1;
+        return ta - tb;
+      });
+
       setEvents(arr);
 
+      // compute joinedEvents for current local user (if any)
       const rawUser = getLocalUser();
       if (rawUser && Array.isArray(rawUser.joinedEvents)) {
         const ids = rawUser.joinedEvents.map(e => (typeof e === 'string' ? e : e._id));
@@ -57,9 +80,8 @@ export default function Dashboard() {
     const local = getLocalUser();
     if (local) setUser(local);
 
-    // listen for updates: events created/deleted
+    // events or user updates -> reload lists
     const onEventsUpdated = () => loadEvents();
-    // listen for user changes (login/logout/join)
     const onUserUpdated = () => {
       const lu = getLocalUser();
       setUser(lu);
@@ -74,6 +96,7 @@ export default function Dashboard() {
       window.removeEventListener('vc:eventsUpdated', onEventsUpdated);
       window.removeEventListener('vc:userUpdated', onUserUpdated);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleJoin = async (eventId) => {
@@ -84,7 +107,7 @@ export default function Dashboard() {
       await API.post(`/api/events/${eventId}/join`);
       alert('You joined the event.');
 
-      // refresh user from server
+      // refresh user from server (best effort)
       try {
         const me = await API.get('/api/auth/me');
         localStorage.setItem('vc_user', JSON.stringify(me.data));
@@ -93,11 +116,9 @@ export default function Dashboard() {
         console.warn('Could not refresh user after join', e);
       }
 
-      // reload lists
+      // reload lists and navigate to events
       await loadEvents();
       loadNotices();
-
-      // go to events page
       navigate('/events');
 
       // notify other pages
@@ -111,11 +132,19 @@ export default function Dashboard() {
 
   // small safe date helper for display
   const safeDateStr = (d) => {
-    if (!d) return 'TBD';
-    const t = Date.parse(String(d));
-    if (isNaN(t) || t <= 0) return 'TBD';
-    return new Date(t).toLocaleDateString();
+    const t = safeTime(d);
+    return isNaN(t) ? 'TBD' : new Date(t).toLocaleDateString();
   };
+
+  // compute upcoming events: only future/today, first 5
+  const upcoming = (() => {
+    const todayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
+    const future = events.filter(ev => {
+      const t = safeTime(ev.date);
+      return !isNaN(t) && t >= todayStart;
+    });
+    return future.slice(0, 5);
+  })();
 
   return (
     <div className="vc-page">
@@ -148,9 +177,9 @@ export default function Dashboard() {
 
             <div className="vc-card">
               <h3 className="card-title">Upcoming Events</h3>
-              {events.length === 0 ? <p className="muted">No upcoming events</p> : (
+              {upcoming.length === 0 ? <p className="muted">No upcoming events</p> : (
                 <ul className="event-list">
-                  {events.slice(0,5).map(ev => (
+                  {upcoming.map(ev => (
                     <li key={ev._id} className="event-row" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                       <div>
                         <h4 style={{margin:0}}>{ev.title}</h4>
