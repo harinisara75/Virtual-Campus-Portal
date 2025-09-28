@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 // src/pages/Dashboard.js
 import React, { useEffect, useState } from 'react';
 import API from '../api';
@@ -24,7 +23,7 @@ export default function Dashboard() {
   // safe timestamp helper: returns ms or NaN for invalid (treat 0 as invalid)
   const safeTime = (val) => {
     if (val === undefined || val === null) return NaN;
-    const t = (typeof val === 'number') ? val : Date.parse(String(val));
+    const t = typeof val === 'number' ? val : Date.parse(String(val));
     if (isNaN(t) || t <= 0) return NaN;
     return t;
   };
@@ -35,7 +34,7 @@ export default function Dashboard() {
       const evRes = await API.get('/api/events');
       const arr = (evRes.data || []).slice();
 
-      // sort: valid dates first (ascending). invalid dates move to end.
+      // sort: valid dates first (ascending). invalid dates move to end
       arr.sort((a, b) => {
         const ta = safeTime(a.date);
         const tb = safeTime(b.date);
@@ -50,8 +49,8 @@ export default function Dashboard() {
       // compute joinedEvents for current local user (if any)
       const rawUser = getLocalUser();
       if (rawUser && Array.isArray(rawUser.joinedEvents)) {
-        const ids = rawUser.joinedEvents.map(e => (typeof e === 'string' ? e : e._id));
-        const filtered = arr.filter(e => ids.includes(e._id));
+        const ids = rawUser.joinedEvents.map((e) => (typeof e === 'string' ? e : e._id));
+        const filtered = arr.filter((e) => ids.includes(e._id));
         setJoinedEvents(filtered);
       } else {
         setJoinedEvents([]);
@@ -97,13 +96,15 @@ export default function Dashboard() {
       window.removeEventListener('vc:eventsUpdated', onEventsUpdated);
       window.removeEventListener('vc:userUpdated', onUserUpdated);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleJoin = async (eventId) => {
     try {
       const rawUser = localStorage.getItem('vc_user');
-      if (!rawUser) { alert('Please login to join'); return; }
+      if (!rawUser) {
+        alert('Please login to join');
+        return;
+      }
 
       await API.post(`/api/events/${eventId}/join`);
       alert('You joined the event.');
@@ -139,8 +140,12 @@ export default function Dashboard() {
 
   // compute upcoming events: only future/today, first 5
   const upcoming = (() => {
-    const todayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
-    const future = events.filter(ev => {
+    const todayStart = (() => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    })();
+    const future = events.filter((ev) => {
       const t = safeTime(ev.date);
       return !isNaN(t) && t >= todayStart;
     });
@@ -152,13 +157,25 @@ export default function Dashboard() {
       <aside className="vc-sidebar">
         <div className="vc-brand">Virtual Campus Portal</div>
         <nav className="vc-nav">
-          <Link to="/" className="vc-nav-item active">Dashboard</Link>
-          <Link to="/notices" className="vc-nav-item">Notices</Link>
-          <Link to="/events" className="vc-nav-item">Events</Link>
-          <Link to="/timetable" className="vc-nav-item">Timetable</Link>
-          <Link to="/map" className="vc-nav-item">Campus Map</Link>
+          <Link to="/" className="vc-nav-item active">
+            Dashboard
+          </Link>
+          <Link to="/notices" className="vc-nav-item">
+            Notices
+          </Link>
+          <Link to="/events" className="vc-nav-item">
+            Events
+          </Link>
+          <Link to="/timetable" className="vc-nav-item">
+            Timetable
+          </Link>
+          <Link to="/map" className="vc-nav-item">
+            Campus Map
+          </Link>
         </nav>
-        <div className="vc-sidebar-footer">{user?.role || 'Student'} • {user?.name || 'Demo'}</div>
+        <div className="vc-sidebar-footer">
+          {user?.role || 'Student'} • {user?.name || 'Demo'}
+        </div>
       </aside>
 
       <main className="vc-main">
@@ -170,25 +187,39 @@ export default function Dashboard() {
           <div className="vc-left-col">
             <div className="vc-card small-stats">
               <div className="stat-row">
-                <div className="stat">Events <div className="stat-num">{events.length}</div></div>
-                <div className="stat">Classes <div className="stat-num">5</div></div>
-                <div className="stat">Notices <div className="stat-num">{notices.length}</div></div>
+                <div className="stat">
+                  Events <div className="stat-num">{events.length}</div>
+                </div>
+                <div className="stat">
+                  Classes <div className="stat-num">5</div>
+                </div>
+                <div className="stat">
+                  Notices <div className="stat-num">{notices.length}</div>
+                </div>
               </div>
             </div>
 
             <div className="vc-card">
               <h3 className="card-title">Upcoming Events</h3>
-              {upcoming.length === 0 ? <p className="muted">No upcoming events</p> : (
+              {upcoming.length === 0 ? (
+                <p className="muted">No upcoming events</p>
+              ) : (
                 <ul className="event-list">
-                  {upcoming.map(ev => (
-                    <li key={ev._id} className="event-row" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  {upcoming.map((ev) => (
+                    <li
+                      key={ev._id}
+                      className="event-row"
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    >
                       <div>
-                        <h4 style={{margin:0}}>{ev.title}</h4>
-                        <div className="muted">{safeDateStr(ev.date)} • {ev.place || 'TBD'}</div>
+                        <h4 style={{ margin: 0 }}>{ev.title}</h4>
+                        <div className="muted">
+                          {safeDateStr(ev.date)} • {ev.place || 'TBD'}
+                        </div>
                         <div className="muted small">Type: {ev.type || 'general'}</div>
                       </div>
                       <div>
-                        { user && (user.role === 'teacher' || user.role === 'admin') ? (
+                        {user && (user.role === 'teacher' || user.role === 'admin') ? (
                           <button onClick={() => navigate(`/events/${ev._id}/attendees`)}>View Attendees</button>
                         ) : (
                           <button onClick={() => handleJoin(ev._id)}>Join</button>
@@ -204,12 +235,14 @@ export default function Dashboard() {
           <div className="vc-right-col">
             <div className="vc-card">
               <h3 className="card-title">Latest Notices</h3>
-              {notices.length === 0 ? <p className="muted">No notices</p> : (
+              {notices.length === 0 ? (
+                <p className="muted">No notices</p>
+              ) : (
                 <ul className="notice-list">
-                  {notices.slice(0,5).map(n => (
+                  {notices.slice(0, 5).map((n) => (
                     <li key={n._id}>
                       <div className="notice-title">{n.title}</div>
-                      <div className="muted small">{n.message?.slice(0,80)}</div>
+                      <div className="muted small">{n.message?.slice(0, 80)}</div>
                     </li>
                   ))}
                 </ul>
@@ -226,11 +259,17 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div style={{marginTop:12}}>
+              <div style={{ marginTop: 12 }}>
                 <h4>Joined Events</h4>
-                {joinedEvents.length === 0 ? <p className="muted">No joined events</p> : (
+                {joinedEvents.length === 0 ? (
+                  <p className="muted">No joined events</p>
+                ) : (
                   <ul>
-                    {joinedEvents.map(e => <li key={e._id} className="muted small">{e.title} — {safeDateStr(e.date)}</li>)}
+                    {joinedEvents.map((e) => (
+                      <li key={e._id} className="muted small">
+                        {e.title} — {safeDateStr(e.date)}
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
