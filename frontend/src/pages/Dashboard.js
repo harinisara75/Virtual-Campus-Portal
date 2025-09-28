@@ -97,6 +97,7 @@ export default function Dashboard() {
       window.removeEventListener('vc:eventsUpdated', onEventsUpdated);
       window.removeEventListener('vc:userUpdated', onUserUpdated);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleJoin = async (eventId) => {
