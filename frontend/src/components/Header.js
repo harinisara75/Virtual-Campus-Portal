@@ -27,7 +27,7 @@ export default function Header({ user, setUser }) {
 
       {/* show nav + user only when not on login/register/home */}
       {!hideFullHeader && (
-        <nav style={{display:'flex', gap:12, alignItems:'center'}}>
+        <nav style={{display:'flex', gap:12, alignItems:'center', padding:'4px 8px', borderRadius:6, background:'#f0f0f0'}}>
           <div style={{display:'flex', gap:10, alignItems:'center'}}>
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/notices" className="nav-link">Notices</Link>
