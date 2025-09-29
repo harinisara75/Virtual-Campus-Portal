@@ -1,69 +1,53 @@
-// src/components/Header.js
+// frontend/src/components/Header.js
 import React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-// adjust path if your axios instance is elsewhere
-import API from '../api';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Header({ user, setUser }) {
-  const navigate = useNavigate();
   const location = useLocation();
 
-  const onLogout = () => {
-    // remove from localStorage
-    localStorage.removeItem('vc_token');
-    localStorage.removeItem('vc_user');
+  // hide nav/user block on login or register routes
+  const hideFullHeader = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/';
 
-    // clear axios header if exists
+  const handleLogout = () => {
+    // clear local auth and app state
     try {
-      delete API.defaults.headers.common['x-auth-token'];
-    } catch (e) {
-      console.warn('Failed to clear API header:', e);
-    }
-
-    // clear user state
-    setUser(null);
-
-    // let other parts of app know user updated
-    window.dispatchEvent(new Event('vc:userUpdated'));
-
-    // navigate to login
-    navigate('/login');
+      localStorage.removeItem('vc_token');
+      localStorage.removeItem('vc_user');
+    } catch (e) {}
+    if (typeof setUser === 'function') setUser(null);
+    // redirect to login page
+    window.location.href = '/login';
   };
 
-  // hide detailed nav on login/register pages
-  if (location.pathname === '/login' || location.pathname === '/register') {
-    return (
-      <header className='header'>
-        <a href='/' className='brand'>Virtual Campus</a>
-      </header>
-    );
-  }
-
   return (
-    <header className='header'>
-      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-        <Link to='/' className='brand'>Virtual Campus</Link>
-        {user && (
-          <nav>
-            <Link to='/dashboard' style={{ marginRight:12 }}>Dashboard</Link>
-            <Link to='/notices' style={{ marginRight:12 }}>Notices</Link>
-            <Link to='/events' style={{ marginRight:12 }}>Events</Link>
-            <Link to='/timetable' style={{ marginRight:12 }}>Timetable</Link>
-            <Link to='/map' style={{ marginRight:12 }}>Map</Link>
-          </nav>
-        )}
+    <header className="app-header" style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px'}}>
+      <div className="brand">
+        <Link to="/" style={{textDecoration:'none', color:'inherit', fontWeight:700}}>Virtual Campus Portal</Link>
       </div>
 
-      <div>
-        { user ? (
-          <>
-            <span style={{ marginRight:12 }}>{user.name} • {user.role}</span>
-            <button onClick={onLogout}>Logout</button>
-          </>
-        ) : (
-          <Link to='/login'>Login</Link>
-        )}
-      </div>
+      {/* show nav + user only when not on login/register/home */}
+      {!hideFullHeader && (
+        <nav style={{display:'flex', gap:12, alignItems:'center'}}>
+          <div style={{display:'flex', gap:10, alignItems:'center'}}>
+            <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/notices" className="nav-link">Notices</Link>
+            <Link to="/events" className="nav-link">Events</Link>
+            <Link to="/timetable" className="nav-link">Timetable</Link>
+            <Link to="/map" className="nav-link">Map</Link>
+          </div>
+
+          <div style={{marginLeft:12, display:'flex', gap:8, alignItems:'center'}}>
+            {user ? (
+              <>
+                <div style={{padding:'4px 8px', borderRadius:6, background:'#f0f0f0'}}>{user.name}</div>
+                <button onClick={handleLogout}>Logout</button>
+              </>
+            ) : (
+              <Link to="/login">Login</Link>
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
