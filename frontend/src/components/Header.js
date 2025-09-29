@@ -29,11 +29,11 @@ export default function Header({ user, setUser }) {
       {!hideFullHeader && (
         <nav style={{display:'flex', gap:12, alignItems:'center', padding:'4px 8px', borderRadius:6, background:'#f0f0f0'}}>
           <div style={{display:'flex', gap:10, alignItems:'center'}}>
-            <Link to="/dashboard" className="nav-link">Dashboard</Link>
-            <Link to="/notices" className="nav-link">Notices</Link>
-            <Link to="/events" className="nav-link">Events</Link>
-            <Link to="/timetable" className="nav-link">Timetable</Link>
-            <Link to="/map" className="nav-link">Map</Link>
+            <Link to="/dashboard" style={{textDecoration:'none', color:'black'}} className="nav-link">Dashboard</Link>
+            <Link to="/notices" style={{textDecoration:'none', color:'black'}} className="nav-link">Notices</Link>
+            <Link to="/events" style={{textDecoration:'none', color:'black'}} className="nav-link">Events</Link>
+            <Link to="/timetable" style={{textDecoration:'none', color:'black'}} className="nav-link">Timetable</Link>
+            <Link to="/map" style={{textDecoration:'none', color:'black'}} className="nav-link">Map</Link>
           </div>
 
           <div style={{marginLeft:12, display:'flex', gap:8, alignItems:'center'}}>
